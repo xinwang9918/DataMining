@@ -81,32 +81,46 @@ for i, col in enumerate(predictors):
     print(f"Variance Explained (R²) on testing data: {test_r2:.4f}")
 
 # ----------------------------
-# Q1.2 Set 2 (Raw Predictors)
+# Q1.2 Set 2 (Raw Predictors - Fixed)
 # ----------------------------
 print("\n" + "=" * 40)
-print("Q1.2 Set 2 - Raw Predictors")
+print("Q1.2 Set 2 - Raw Predictors (Refined)")
 print("=" * 40)
 
 X_train_raw = train[predictors].values
 X_test_raw = test[predictors].values
 
+# 根据每个 predictor 的数值范围选择不同的学习率
+learning_rates = {
+    "Cement (component 1)(kg in a m^3 mixture)": 1e-7,
+    "Blast Furnace Slag (component 2)(kg in a m^3 mixture)": 1e-7,
+    "Fly Ash (component 3)(kg in a m^3 mixture)": 1e-7,
+    "Water  (component 4)(kg in a m^3 mixture)": 1e-7,
+    "Superplasticizer (component 5)(kg in a m^3 mixture)": 1e-6,
+    "Coarse Aggregate  (component 6)(kg in a m^3 mixture)": 1e-7,
+    "Fine Aggregate (component 7)(kg in a m^3 mixture)": 1e-7,
+    "Age (day)": 1e-5
+}
+
 for i, col in enumerate(predictors):
     x_train = X_train_raw[:, i]
     x_test = X_test_raw[:, i]
 
-    # 为了避免梯度爆炸，仍然中心化，但这是允许的（数值稳定性）
-    mean_x = np.mean(x_train)
-    std_x = np.std(x_train)
-    x_train_std = (x_train - mean_x) / std_x
-    x_test_std = (x_test - mean_x) / std_x
+    # 中心化 (NOT standardization)
+    x_mean = np.mean(x_train)
+    x_train_centered = x_train - x_mean
+    x_test_centered = x_test - x_mean
 
-    m, b = gradient_descent(x_train_std, y_train, lr=0.01, epochs=5000)
-    train_mse, train_r2 = evaluate(x_train_std, y_train, m, b)
-    test_mse, test_r2 = evaluate(x_test_std, y_test, m, b)
+    lr = learning_rates[col]
+    m, b = gradient_descent(x_train_centered, y_train, lr=lr, epochs=50000)
+
+    train_mse, train_r2 = evaluate(x_train_centered, y_train, m, b)
+    test_mse, test_r2 = evaluate(x_test_centered, y_test, m, b)
 
     print(f"\n{col} as predictor")
-    print(f"m and b values: {m:.4f}, {b:.4f}")
+    print(f"m and b values: {m:.6f}, {b:.6f}")
     print(f"MSE on training data: {train_mse:.4f}")
     print(f"Variance Explained (R²) on training data: {train_r2:.4f}")
     print(f"MSE on testing data: {test_mse:.4f}")
     print(f"Variance Explained (R²) on testing data: {test_r2:.4f}")
+
